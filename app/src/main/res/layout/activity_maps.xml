@@ -1,0 +1,44 @@
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:ignore="UselessParent"
+        android:weightSum="3">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:id="@+id/edtsearch"
+            tools:ignore="TextFields"
+            android:hint="search here..."
+            android:layout_weight="1"/>
+
+
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:map="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/map"
+            android:layout_weight="1"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            tools:ignore="ObsoleteLayoutParam"
+            tools:context="com.example.map.test.MapsActivity" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:text="search"
+            android:onClick="searchClick"
+            tools:ignore="HardcodedText"
+            android:layout_weight="1"/>
+    </LinearLayout>
+</RelativeLayout>
