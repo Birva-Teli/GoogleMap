@@ -6,14 +6,21 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,35 +33,69 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends FragmentActivity implements
+        OnMapReadyCallback,
+        GoogleMap.OnInfoWindowClickListener,
+        GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMapClickListener,
+        GoogleMap.OnMarkerClickListener {
 
-    private  GoogleMap mMap;
+    private GoogleMap mMap;
     private static final int LOCATION_REQUEST = 500;
 
-    private final int[] MAP_TYPES = {GoogleMap.MAP_TYPE_NONE,
-            GoogleMap.MAP_TYPE_NORMAL,
-            GoogleMap.MAP_TYPE_SATELLITE,
-            GoogleMap.MAP_TYPE_TERRAIN,
-            GoogleMap.MAP_TYPE_HYBRID,
-
-    };
-    private int curMapTypeIndex = 1;
+    String logTag = "test";
+    Location currentLocation;
+    FusedLocationProviderClient fusedLocationProviderClient;
     LatLng ll;
     EditText etsearch;
+    TextView tvCurrentLocationName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        Log.d(logTag, "1");
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+       /* SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        etsearch=(EditText)findViewById(R.id.edtsearch);
+        Log.d(logTag, "2");*/
+        etsearch = (EditText) findViewById(R.id.edtsearch);
+        tvCurrentLocationName = (TextView) findViewById(R.id.tvCurrentLocationName);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        fetchLastLocation();
+
+        Log.d(logTag, "3");
+
+    }
+
+    private void fetchLastLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+           ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.ACCESS_FINE_LOCATION},LOCATION_REQUEST);
+            return;
+        }
+        Task<Location> task = fusedLocationProviderClient.getLastLocation();
+        task.addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if(location!=null)
+                {
+                    currentLocation=location;
+                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                            .findFragmentById(R.id.map);
+                    mapFragment.getMapAsync(MapsActivity.this);
+                }
+            }
+        });
 
     }
 
@@ -70,7 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-
+        Log.d(logTag,"4");
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -81,6 +122,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnInfoWindowClickListener( this );
         mMap.setOnMapClickListener(this);
         mMap.setMyLocationEnabled(true);
+        ll=new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+        MarkerOptions options = new MarkerOptions().position(ll);
+        options.title(getAddressFromLatLng(ll));
+
+        Log.d(logTag,"5");
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -98,24 +144,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         return;
                     }
                     mMap.setMyLocationEnabled(true);
+        Log.d(logTag,"6");
                 }
                 break;
-        }
-    }
-
-    public void changeType(View view) {
-        mMap.setMapType(MAP_TYPES[curMapTypeIndex]);
-        Toast.makeText(this, String.valueOf(MAP_TYPES[curMapTypeIndex]), Toast.LENGTH_SHORT).show();
-        curMapTypeIndex++;
-        if(curMapTypeIndex>4)
-        {
-            curMapTypeIndex=0;
         }
     }
 
     @Override
     public void onInfoWindowClick(Marker marker) {
         Toast.makeText(this, "info window click", Toast.LENGTH_SHORT).show();
+        Log.d(logTag,"7");
     }
 
     @Override
@@ -124,22 +162,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ll=latLng;
         MarkerOptions options = new MarkerOptions().position(latLng);
         options.title(getAddressFromLatLng(latLng));
-
         options.icon( BitmapDescriptorFactory.defaultMarker() );
         mMap.addMarker(options);
         mMap.animateCamera(CameraUpdateFactory.newLatLng(ll));
+        Log.d(logTag,"8");
     }
 
     @Override
     public void onMapClick(LatLng latLng) {
         Toast.makeText(this, "(lat:"+latLng.latitude+"-long:"+latLng.longitude+")", Toast.LENGTH_SHORT).show();
-
         ll=latLng;
+        Log.d(logTag,"9");
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
         marker.showInfoWindow();
+        Log.d(logTag,"10");
         return false;
     }
 
@@ -153,13 +192,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .get(0).getAddressLine(0);
         } catch (IOException e) {
         }
-
+        tvCurrentLocationName.setText(address);
+        Log.d(logTag,"11");
         return address;
     }
 
     public void searchClick(View view) {
         mMap.clear();
         Geocoder geocoder = new Geocoder(this);
+        Log.d(logTag,"12");
         List<Address> lst;
         try {
 
@@ -177,6 +218,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .build();
 
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            Log.d(logTag,"13");
         } catch (IOException e) {
         }
     }

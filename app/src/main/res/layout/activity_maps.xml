@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         tools:ignore="UselessParent"
-        android:weightSum="3">
+        android:weightSum="4">
 
         <EditText
             android:layout_width="match_parent"
@@ -32,6 +32,12 @@
             android:layout_alignParentStart="true"
             tools:ignore="ObsoleteLayoutParam"
             tools:context="com.example.map.test.MapsActivity" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:id="@+id/tvCurrentLocationName"
+            android:layout_weight="1"/>
 
         <Button
             android:layout_width="match_parent"
